@@ -17,12 +17,9 @@ class DigitizrPlugin(object):
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
-
         We implement this ourselves since we do not inherit QObject.
-
         :param message: String for translation.
         :type message: str, QString
-
         :returns: Translated version of message.
         :rtype: QString
         """
@@ -70,6 +67,7 @@ class DigitizrPlugin(object):
         self.toolAddLineBufferButton.setDefaultAction(self.actionAddLineBuffer)
 
     def removeToolAddLineBufferButton(self):
+        self.toolAddLineBufferButton.setParent(None) 
         self._iface.removeToolBarIcon(self.actionAddLineBuffer)
 
     def showToolAddLineBufferButtonSettings(self):

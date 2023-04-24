@@ -52,7 +52,7 @@ class DigitizrPlugin(object):
         self.actionAddLineBuffer = QAction(self.tr("Add line buffer"), self._iface.mainWindow())
         self.actionAddLineBuffer.setIcon(QIcon(os.path.join(settings.icons_dir, "line_buffer.svg")))
         self.actionAddLineBuffer.setCheckable(True)
-        self.actionAddLineBuffer.setEnabled(self.toolAddLineBuffer.isAvalable())
+        self.actionAddLineBuffer.setEnabled(self.toolAddLineBuffer.isAvailable())
         self.actionAddLineBuffer.triggered.connect(self.activateToolAddLineBuffer)
         #self.toolAddLineBuffer.setAction(self.actionAddLineBuffer)
         self.toolAddLineBuffer.availabilityChange.connect(self.actionAddLineBuffer.setEnabled)

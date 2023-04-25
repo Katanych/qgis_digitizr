@@ -75,11 +75,14 @@ class QgsMapToolAddLineBuffer(QgsMapToolCapture):
         if not vlayer:
             return False
 
-        if not vlayer.isEditable():
-            return False
-
         if vlayer.geometryType() != QgsWkbTypes.GeometryType.PolygonGeometry:
             return False
+
+        if not vlayer.isEditable():
+            # Check if editing can be started
+            if not vlayer.startEditing():
+                return False
+            vlayer.rollBack()
 
         return True
 

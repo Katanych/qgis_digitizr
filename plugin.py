@@ -14,11 +14,20 @@ class DigitizrPlugin(object):
 
     def __init__(self, iface):
         self._iface = iface
-        self.toolAddLineBuffer = None # добавляем инициализацию переменной
+
+    def tr(self, message):
+        """Get the translation for a string using Qt translation API.
+        We implement this ourselves since we do not inherit QObject.
+        :param message: String for translation.
+        :type message: str, QString
+        :returns: Translated version of message.
+        :rtype: QString
+        """
+        return QCoreApplication.translate('NGConnectPlugin', message)
 
     def initGui(self):
         self.toolAddLineBuffer = QgsMapToolAddLineBuffer(self._iface.mapCanvas(), self._iface.cadDockWidget())
-
+        
         self.addToolAddLineBufferButton()
 
         self._iface.mapCanvas().mapToolSet.connect(self.disableTools)
@@ -27,7 +36,7 @@ class DigitizrPlugin(object):
         self.removeToolAddLineBufferButton()
     
     def disableTools(self, new_tool):
-        if self.toolAddLineBuffer is not None and new_tool != self.toolAddLineBuffer: # добавляем проверку на None
+        if new_tool != self.toolAddLineBuffer:
             self.actionAddLineBuffer.setChecked(False)
 
     def activateToolAddLineBuffer(self, status):
@@ -43,39 +52,38 @@ class DigitizrPlugin(object):
         self.actionAddLineBuffer = QAction(self.tr("Add line buffer"), self._iface.mainWindow())
         self.actionAddLineBuffer.setIcon(QIcon(os.path.join(settings.icons_dir, "line_buffer.svg")))
         self.actionAddLineBuffer.setCheckable(True)
-        self.actionAddLineBuffer.setEnabled(self.toolAddLineBuffer.isAvailable()) # изменяем на isAvailable()
+        self.actionAddLineBuffer.setEnabled(self.toolAddLineBuffer.isAvalable())
         self.actionAddLineBuffer.triggered.connect(self.activateToolAddLineBuffer)
-
-        # убираем следующую строку, так как она приводит к ошибке
-        # self.toolAddLineBuffer.setAction(self.actionAddLineBuffer)
-
-        # добавляем проверку на None и изменяем на isAvailable()
-        if self.toolAddLineBuffer is not None:
-            self.toolAddLineBuffer.availabilityChanged.connect(self.actionAddLineBuffer.setEnabled)
+        #self.toolAddLineBuffer.setAction(self.actionAddLineBuffer)
+        self.toolAddLineBuffer.availabilityChange.connect(self.actionAddLineBuffer.setEnabled)
 
         self.actionAddLineBufferSettings = QAction(self.tr("Settings"), self._iface.mainWindow())
         self.actionAddLineBufferSettings.setIcon(QIcon(os.path.join(settings.icons_dir,"settings.svg")))
         self.actionAddLineBufferSettings.triggered.connect(self.showToolAddLineBufferButtonSettings)
 
         m = self.toolAddLineBufferButton.menu()
-        m.addAction(self.actionAddLineBuffer) # добавляем кнопку в меню
+        # m.addAction(self.actionAddLineBuffer)
         m.addAction(self.actionAddLineBufferSettings)
         self.toolAddLineBufferButton.setDefaultAction(self.actionAddLineBuffer)
 
     def removeToolAddLineBufferButton(self):
-        self._iface.removeToolBarWidget(self.toolAddLineBufferButton) # изменяем на removeToolBarWidget
+        self.toolAddLineBufferButton.setParent(None) 
+        self._iface.removeToolBarIcon(self.actionAddLineBuffer)
 
-    # добавляем функцию для проверки доступности инструмента
-    def isAvailable(self):
-        vlayer = self._iface.activeLayer() # изменяем на activeLayer()
+    def showToolAddLineBufferButtonSettings(self):
+        qgis_settings = QSettings()
 
-        if not vlayer:
-            return False
+        buffer_size = qgis_settings.value(settings.buffer_size_key)
+        if buffer_size is None:
+            buffer_size = 0.0
+        buffer_size = float(buffer_size)
 
-        if not vlayer.isEditable():
-            return False
+        buffer_size, result = QInputDialog.getDouble(
+            self._iface.mainWindow(),
+            self.tr("Add line buffer settings"),
+            self.tr("Buffer size (meters):"),
+            buffer_size
+        )
 
-        if vlayer.geometryType() != QgsWkbTypes.PolygonGeometry: # изменяем на PolygonGeometry
-            return False
-
-        return True
+        if result:
+            qgis_settings.setValue(settings.buffer_size_key, buffer_size)
